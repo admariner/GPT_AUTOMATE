@@ -47,8 +47,7 @@ class Ball(pygame.sprite.Sprite):
             self.rect.clamp_ip(self.bounds)
             Sound('bounce.wav').play()
 
-        paddle_collision = pygame.sprite.spritecollideany(self, paddles)
-        if paddle_collision:
+        if paddle_collision := pygame.sprite.spritecollideany(self, paddles):
             self.direction.y *= -1
 
             if isinstance(paddle_collision, AI):
@@ -72,10 +71,9 @@ class Paddle(pygame.sprite.Sprite):
         self.rect.move_ip(self.speed * dt, 0)
         self.rect.clamp_ip(self.bounds)
 
-        if ball:
-            if ball.rect.colliderect(self.rect):
-                ball.rect.clamp_ip(self.rect.left, self.rect.top, self.rect.right, self.rect.top)
-                ball.direction.y *= -1
+        if ball and ball.rect.colliderect(self.rect):
+            ball.rect.clamp_ip(self.rect.left, self.rect.top, self.rect.right, self.rect.top)
+            ball.direction.y *= -1
 
 
 class Player(Paddle):
@@ -109,16 +107,16 @@ class AI(Paddle):
             if self.difficulty == 'easy':
                 self.target_x = ball.rect.centerx
 
-            elif self.difficulty == 'medium':
-                if ball.rect.centery < self.bounds.bottom / 2:
-                    self.target_x = ball.rect.centerx
-                else:
-                    self.target_x = self.bounds.centerx
-
             elif self.difficulty == 'hard':
                 offset = ball.rect.centerx - self.rect.centerx
                 self.target_x += offset * 0.3
 
+            elif self.difficulty == 'medium':
+                self.target_x = (
+                    ball.rect.centerx
+                    if ball.rect.centery < self.bounds.bottom / 2
+                    else self.bounds.centerx
+                )
             self.speed = min(max(self.target_x - self.rect.centerx, -500 * dt), 500 * dt)
 
         super().update(dt)
